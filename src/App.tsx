@@ -293,11 +293,11 @@ function Workspace() {
                   </Button>
                   <Button className="shadow-[0_8px_20px_-8px_rgb(37_99_235/0.7)]" onClick={() => setTaskDialog({ open: true, columnId: "todo" })}>
                     <Plus /> New task
-                    <kbd className="ml-1 rounded bg-white/20 px-1.5 text-[10px] font-semibold">N</kbd>
+                    <kbd className="ml-1 hidden rounded bg-white/20 px-1.5 text-[10px] font-semibold sm:inline">N</kbd>
                   </Button>
                 </div>
               </div>
-              <div className="grid border-t sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 border-t xl:grid-cols-4">
                 <Stat label="Progress" value={`${Math.round(stats.progress * 100)}%`} sub={`${stats.done} of ${stats.total} tasks done`}>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                     <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all" style={{ width: `${stats.progress * 100}%` }} />
@@ -421,12 +421,12 @@ function Workspace() {
 
 function Stat({ label, value, sub, icon, tone, children }: { label: string; value: string; sub: string; icon?: React.ReactNode; tone?: "danger"; children?: React.ReactNode }) {
   return (
-    <div className="border-b p-5 last:border-b-0 sm:[&:nth-child(odd)]:border-r xl:border-b-0 xl:border-r xl:last:border-r-0">
+    <div className="p-4 sm:p-5 [&:nth-child(-n+2)]:border-b [&:nth-child(odd)]:border-r xl:border-r xl:last:border-r-0 xl:[&:nth-child(-n+2)]:border-b-0">
       <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
         {icon}
       </div>
-      <p className={cn("mt-2 text-3xl font-extrabold tabular-nums tracking-tight", tone === "danger" && "text-red-600 dark:text-red-400")}>{value}</p>
+      <p className={cn("mt-2 text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight", tone === "danger" && "text-red-600 dark:text-red-400")}>{value}</p>
       <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
       {children}
     </div>

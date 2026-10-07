@@ -102,7 +102,7 @@ export function TaskDialog({ project, open, onOpenChange, task, columnId = "todo
             </Field>
             <Field label="Priority">
               <Select value={form.priority} onValueChange={(v) => set("priority", v as Task["priority"])}>
-                <SelectTrigger aria-label="Priority"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Priority" className="capitalize"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PRIORITIES.map((p) => (
                     <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
