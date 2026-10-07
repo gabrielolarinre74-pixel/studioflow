@@ -28,7 +28,7 @@ export function sampleProjects(now = Date.now()): Project[] {
       name: "Website redesign",
       client: "Harbor & Pine Café",
       description: "New mobile-first website with online menu, table booking and Google reviews.",
-      color: "#7c3aed",
+      color: "#2563eb",
       startDate: day(-28, now),
       dueDate: day(16, now),
       columns: DEFAULT_COLUMNS,

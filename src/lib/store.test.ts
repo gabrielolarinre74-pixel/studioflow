@@ -8,7 +8,7 @@ describe("store", () => {
   });
 
   it("creates a project with default columns and makes it active", () => {
-    const id = useStore.getState().addProject({ name: "Landing page", client: "Acme", description: "", color: "#7c3aed" });
+    const id = useStore.getState().addProject({ name: "Landing page", client: "Acme", description: "", color: "#2563eb" });
     const s = useStore.getState();
     expect(s.activeId).toBe(id);
     expect(s.projects.find((p) => p.id === id)?.columns.map((c) => c.id)).toEqual(["todo", "in-progress", "review", "done"]);

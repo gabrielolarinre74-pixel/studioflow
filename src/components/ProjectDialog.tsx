@@ -9,7 +9,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 
-const COLORS = ["#7c3aed", "#0ea5e9", "#f97316", "#10b981", "#e11d48", "#eab308"];
+const COLORS = ["#2563eb", "#0ea5e9", "#0f172a", "#10b981", "#f97316", "#e11d48"];
 
 type Props = { open: boolean; onOpenChange: (o: boolean) => void; project?: Project | null };
 

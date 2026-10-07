@@ -100,6 +100,17 @@ export const useStore = create<State>()(
       },
       resetDemo: () => set({ projects: sampleProjects(), activeId: "p-website" }),
     }),
-    { name: "studioflow", version: 1 }
+    {
+      name: "studioflow",
+      version: 2,
+      // v2 moved the brand to blue: recolour projects saved with the old violet default
+      migrate: (persisted, version) => {
+        const state = persisted as { projects?: { color: string }[] };
+        if (version < 2 && state?.projects) {
+          state.projects = state.projects.map((p) => (/^#(7c3aed|8b5cf6|6366f1|4f46e5)$/i.test(p.color) ? { ...p, color: "#2563eb" } : p));
+        }
+        return state as never;
+      },
+    }
   )
 );
