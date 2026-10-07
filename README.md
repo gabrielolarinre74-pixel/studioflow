@@ -4,7 +4,7 @@
 
 Client work usually stalls in the same place: the studio is waiting on content or approvals, the client doesn't know what is expected of them, and status updates turn into long email threads. StudioFlow keeps every client project on a drag-and-drop board, makes it obvious who each task is waiting on, and lets you send the client a **read-only status page as a single link**. The client doesn't need an account, and there is no server to run.
 
-**Live demo:** [Open in StackBlitz](https://stackblitz.com/github/gabrielolarinre74-pixel/studioflow) (runs in your browser with sample data, no sign-up)
+**Try it:** clone the repo and run it locally in a couple of minutes (see [Run locally](#run-locally)). It opens in demo mode with fictional sample data, so there is nothing to sign up for and no backend to configure.
 
 ![StudioFlow board](docs/screenshots/board.png)
 
@@ -49,7 +49,7 @@ Client work usually stalls in the same place: the studio is waiting on content o
 - **Zustand** (persist middleware) for state
 - **Zod** for data validation (backups and share links)
 - **Vitest** + Testing Library + jsdom
-- **GitHub Actions**: lint, test, build and deploy to GitHub Pages
+- **GitHub Actions**: lint, tests and build checks on every push
 
 ## How it's built
 
@@ -69,16 +69,37 @@ src/
 
 Drag logic lives in `moveTask()`, a pure function that never mutates state and never computes a negative index when a task is dropped above the first card. Board, share-link and store behaviour is covered by unit tests, and the main flows (rendering the board, validating the task form, opening share links) are covered by component tests.
 
-## Getting started
+## Run locally
+
+**Requirements:** Node.js 20 or newer (npm comes with it).
 
 ```bash
+git clone https://github.com/gabrielolarinre74-pixel/studioflow.git
+cd studioflow
 npm install
-npm run dev       # http://localhost:5173
-npm test          # unit + component tests
-npm run build     # production build in dist/
+npm run dev
 ```
 
-No environment variables or API keys are needed. See `.env.example`.
+Then open http://localhost:5173.
+
+### Demo mode
+
+The app starts with fictional sample data so every screen (the project boards and the client status page) has something to show. Everything you add or change is saved in your browser's `localStorage`. Nothing is sent to a server. To start over, use **Reset** in the sidebar.
+
+### Other commands
+
+```bash
+npm test
+npm run lint
+npm run build
+npm run preview
+```
+
+`npm run build` writes a static site to `dist/`, and `npm run preview` serves it. No environment variables or API keys are needed (see `.env.example`).
+
+## Deployment
+
+The production build is a static site, so `dist/` can be hosted on Vercel, Netlify, Cloudflare Pages, S3 or any static host. GitHub Actions (`.github/workflows/ci.yml`) runs lint, tests and the build on every push and pull request. A GitHub Pages workflow is included, but it is turned off and only runs if someone starts it by hand.
 
 ## Roadmap
 
