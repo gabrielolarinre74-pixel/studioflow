@@ -45,4 +45,24 @@ describe("App", () => {
     render(<App />);
     expect(screen.getByText(/broken or incomplete/i)).toBeInTheDocument();
   });
+
+  it("opens the new task form and the shortcut list from the keyboard", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.keyboard("n");
+    expect(await screen.findByLabelText("Title")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await user.keyboard("?");
+    expect(await screen.findByRole("heading", { name: "Keyboard shortcuts" })).toBeInTheDocument();
+  });
+
+  it("does not trigger shortcuts while typing in search", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const search = screen.getAllByPlaceholderText("Search tasks")[0];
+    await user.click(search);
+    await user.keyboard("n");
+    expect(search).toHaveValue("n");
+    expect(screen.queryByLabelText("Title")).not.toBeInTheDocument();
+  });
 });

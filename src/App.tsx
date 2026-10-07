@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CalendarClock, Download, FolderPlus, Hourglass, Link2, MoreHorizontal, Plus, RotateCcw, Search, Settings2, Upload } from "lucide-react";
+import { AlertTriangle, CalendarClock, Download, FolderPlus, Hourglass, Keyboard, Link2, MoreHorizontal, Plus, RotateCcw, Search, Settings2, Upload } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { KanbanBoard } from "./components/KanbanBoard";
 import { Logo } from "./components/Logo";
@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { filterTasks, formatDay, projectStats, type TaskFilter } from "./lib/board";
 import { decodeSnapshot, readShareHash, shareUrl } from "./lib/share";
 import { useStore } from "./lib/store";
+import { SHORTCUTS, shortcutFor } from "./lib/shortcuts";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./components/ui/dialog";
 import type { Task } from "./lib/types";
 import { cn } from "./lib/utils";
 
@@ -82,6 +84,7 @@ function Workspace() {
   const setProjectDialog = (d: { open: boolean; edit: boolean }) => setProjectDialogState((prev) => ({ ...d, n: prev.n + 1 }));
   const fileRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const visibleTasks = useMemo(() => (project ? filterTasks(project.tasks, filter) : []), [project, filter]);
   const stats = project ? projectStats(project) : null;
@@ -97,6 +100,28 @@ function Workspace() {
       window.prompt("Copy this link and send it to your client:", url);
     }
   };
+
+  // Single-key shortcuts (ignored while typing or when a dialog is open)
+  const shortcutHandlers = useRef<Record<string, () => void>>({});
+  useEffect(() => {
+    shortcutHandlers.current = {
+      "new-task": () => project && setTaskDialog({ open: true, columnId: "todo" }),
+      search: () => searchRef.current?.focus(),
+      share: () => void copyShareLink(),
+      help: () => setHelpOpen((o) => !o),
+    };
+  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (document.querySelector('[role="dialog"]') && e.key !== "?") return;
+      const action = shortcutFor(e);
+      if (!action) return;
+      e.preventDefault();
+      shortcutHandlers.current[action]?.();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify({ app: "studioflow", version: 1, projects }, null, 2)], { type: "application/json" });
@@ -167,6 +192,9 @@ function Workspace() {
           </nav>
           <div className="m-3 rounded-xl border border-dashed p-3 text-xs leading-relaxed text-muted-foreground">
             Saved in this browser. Use <span className="font-semibold text-foreground">Export</span> in the menu to keep a backup.
+            <button type="button" onClick={() => setHelpOpen(true)} className="mt-2 flex items-center gap-1.5 font-semibold text-primary hover:underline">
+              <Keyboard className="size-3.5" /> Keyboard shortcuts
+            </button>
           </div>
         </div>
       </aside>
@@ -358,6 +386,29 @@ function Workspace() {
           onOpenChange={(open) => setTaskDialogState((d) => ({ ...d, open }))}
         />
       )}
+      <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Keyboard shortcuts</DialogTitle>
+            <DialogDescription>Work faster without leaving the keyboard.</DialogDescription>
+          </DialogHeader>
+          <ul className="divide-y rounded-xl border">
+            {SHORTCUTS.map((sc) => (
+              <li key={sc.action} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                {sc.label}
+                <kbd className="rounded-md border bg-muted px-2 py-0.5 text-xs font-semibold">{sc.keys}</kbd>
+              </li>
+            ))}
+            <li className="flex items-center justify-between px-4 py-2.5 text-sm">
+              Move a focused card
+              <span className="flex gap-1">
+                <kbd className="rounded-md border bg-muted px-2 py-0.5 text-xs font-semibold">Space</kbd>
+                <kbd className="rounded-md border bg-muted px-2 py-0.5 text-xs font-semibold">← →</kbd>
+              </span>
+            </li>
+          </ul>
+        </DialogContent>
+      </Dialog>
       <ProjectDialog
         key={`project-${projectDialog.n}`}
         open={projectDialog.open}
