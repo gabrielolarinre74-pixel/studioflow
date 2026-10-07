@@ -81,6 +81,7 @@ function Workspace() {
   const [projectDialog, setProjectDialogState] = useState<{ open: boolean; edit: boolean; n: number }>({ open: false, edit: false, n: 0 });
   const setProjectDialog = (d: { open: boolean; edit: boolean }) => setProjectDialogState((prev) => ({ ...d, n: prev.n + 1 }));
   const fileRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const visibleTasks = useMemo(() => (project ? filterTasks(project.tasks, filter) : []), [project, filter]);
   const stats = project ? projectStats(project) : null;
@@ -119,44 +120,59 @@ function Workspace() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-72 shrink-0 flex-col border-r bg-background lg:flex">
-        <div className="border-b px-5 py-4">
-          <Logo />
+    <div className="flex min-h-screen bg-background">
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 p-3 lg:block">
+        <div className="flex h-full flex-col rounded-2xl border bg-card shadow-[0_1px_2px_rgb(15_23_42/0.04),0_12px_32px_-16px_rgb(15_23_42/0.18)]">
+          <div className="px-5 pb-4 pt-5">
+            <Logo />
+          </div>
+          <div className="mx-3 rounded-xl bg-muted/70 p-1">
+            <button
+              type="button"
+              onClick={() => setProjectDialog({ open: true, edit: false })}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-foreground py-2 text-sm font-semibold text-background transition hover:opacity-90"
+            >
+              <FolderPlus className="size-4" /> New client project
+            </button>
+          </div>
+          <p className="px-5 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Projects · {projects.length}</p>
+          <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4" aria-label="Projects">
+            {projects.map((p) => {
+              const s = projectStats(p);
+              const active = p.id === project?.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setActive(p.id)}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-muted",
+                    active && "bg-accent text-accent-foreground hover:bg-accent"
+                  )}
+                >
+                  {active && <span className="absolute -left-3 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary" />}
+                  <ProgressRing value={s.progress} color={p.color} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{p.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{p.client}</span>
+                  </span>
+                  {s.overdue > 0 && (
+                    <span className="rounded-full bg-red-500/10 px-1.5 text-[11px] font-semibold text-red-600" title={`${s.overdue} overdue`}>
+                      {s.overdue}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+          <div className="m-3 rounded-xl border border-dashed p-3 text-xs leading-relaxed text-muted-foreground">
+            Saved in this browser. Use <span className="font-semibold text-foreground">Export</span> in the menu to keep a backup.
+          </div>
         </div>
-        <div className="flex items-center justify-between px-5 pb-2 pt-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Client projects</p>
-          <Button variant="ghost" size="icon" className="size-7" aria-label="New project" onClick={() => setProjectDialog({ open: true, edit: false })}>
-            <FolderPlus />
-          </Button>
-        </div>
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
-          {projects.map((p) => {
-            const s = projectStats(p);
-            return (
-              <button
-                key={p.id}
-                onClick={() => setActive(p.id)}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted",
-                  p.id === project?.id && "bg-accent text-accent-foreground hover:bg-accent"
-                )}
-              >
-                <ProgressRing value={s.progress} color={p.color} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">{p.name}</span>
-                  <span className="block truncate text-xs text-muted-foreground">{p.client}</span>
-                </span>
-                {s.overdue > 0 && <span className="rounded-full bg-rose-500/15 px-1.5 text-[11px] font-semibold text-rose-600">{s.overdue}</span>}
-              </button>
-            );
-          })}
-        </nav>
-        <div className="border-t p-4 text-xs text-muted-foreground">Data is saved in this browser. Use Export to back it up.</div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b bg-background px-4 py-3 lg:px-6">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur lg:border-none lg:bg-transparent lg:px-8 lg:pt-6 lg:backdrop-blur-none">
           <div className="lg:hidden">
             <Logo subtitle={false} />
           </div>
@@ -170,20 +186,31 @@ function Workspace() {
               </SelectContent>
             </Select>
           </div>
-          <div className="relative hidden max-w-sm flex-1 lg:block">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Search tasks…"
-              value={filter.query}
-              onChange={(e) => setFilter({ ...filter, query: e.target.value })}
-            />
-          </div>
+          {project && (
+            <p className="hidden min-w-0 items-center gap-2 truncate text-sm text-muted-foreground lg:flex">
+              <span>Projects</span>
+              <span className="text-border">/</span>
+              <span>{project.client}</span>
+              <span className="text-border">/</span>
+              <span className="truncate font-medium text-foreground">{project.name}</span>
+            </p>
+          )}
           <div className="ml-auto flex items-center gap-2">
+            <div className="relative hidden w-72 lg:block">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                ref={searchRef}
+                className="h-9 rounded-lg bg-card pl-9 pr-10"
+                placeholder="Search tasks"
+                value={filter.query}
+                onChange={(e) => setFilter({ ...filter, query: e.target.value })}
+              />
+              <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border bg-muted px-1.5 text-[10px] font-semibold text-muted-foreground">/</kbd>
+            </div>
             <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="More actions"><MoreHorizontal /></Button>
+                <Button variant="outline" size="icon" className="bg-card" aria-label="More actions"><MoreHorizontal /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem onClick={() => setProjectDialog({ open: true, edit: false })}><FolderPlus className="mr-2 size-4" /> New project</DropdownMenuItem>
@@ -217,65 +244,82 @@ function Workspace() {
         </header>
 
         {project && stats ? (
-          <main className="flex flex-1 flex-col gap-5 p-4 lg:p-6">
-            <section className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="size-2.5 rounded-full" style={{ backgroundColor: project.color }} />
-                  {project.client}
+          <main className="flex flex-1 flex-col gap-6 p-4 lg:px-8 lg:pb-8 lg:pt-4">
+            <section className="relative overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(15_23_42/0.04),0_12px_32px_-16px_rgb(15_23_42/0.18)]">
+              <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400" />
+              <div className="flex flex-col gap-6 p-6 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
+                  <span className="inline-flex items-center gap-2 rounded-full border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="size-2 rounded-full" style={{ backgroundColor: project.color }} />
+                    {project.client}
+                  </span>
+                  <h1 className="mt-3 text-[28px] font-extrabold leading-tight tracking-tight sm:text-[32px]">{project.name}</h1>
+                  {project.description && <p className="mt-1.5 max-w-2xl text-muted-foreground">{project.description}</p>}
                 </div>
-                <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{project.name}</h1>
-                {project.description && <p className="mt-1 max-w-2xl text-muted-foreground">{project.description}</p>}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => setProjectDialog({ open: true, edit: true })}>
-                  <Settings2 /> Settings
-                </Button>
-                <Button variant="outline" onClick={copyShareLink}>
-                  <Link2 /> Share with client
-                </Button>
-                <Button onClick={() => setTaskDialog({ open: true, columnId: "todo" })}>
-                  <Plus /> New task
-                </Button>
-              </div>
-            </section>
-
-            <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <StatCard label="Progress" value={`${Math.round(stats.progress * 100)}%`} sub={`${stats.done} of ${stats.total} tasks done`}>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${stats.progress * 100}%`, backgroundColor: project.color }} />
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setProjectDialog({ open: true, edit: true })}>
+                    <Settings2 /> Edit
+                  </Button>
+                  <Button variant="outline" onClick={copyShareLink}>
+                    <Link2 /> Share with client
+                  </Button>
+                  <Button className="shadow-[0_8px_20px_-8px_rgb(37_99_235/0.7)]" onClick={() => setTaskDialog({ open: true, columnId: "todo" })}>
+                    <Plus /> New task
+                    <kbd className="ml-1 rounded bg-white/20 px-1.5 text-[10px] font-semibold">N</kbd>
+                  </Button>
                 </div>
-              </StatCard>
-              <StatCard label="Waiting on client" value={String(stats.awaitingClient)} sub="In review or client-owned" icon={<Hourglass className="size-4 text-sky-500" />} />
-              <StatCard label="Overdue" value={String(stats.overdue)} sub={stats.overdue ? "Needs attention" : "All on schedule"} icon={<AlertTriangle className={cn("size-4", stats.overdue ? "text-rose-500" : "text-muted-foreground")} />} />
-              <StatCard
-                label="Deadline"
-                value={stats.daysLeft === undefined ? "–" : stats.daysLeft >= 0 ? `${stats.daysLeft} days` : `${-stats.daysLeft}d late`}
-                sub={project.dueDate ? formatDay(project.dueDate, { day: "numeric", month: "long" }) : "No deadline set"}
-                icon={<CalendarClock className="size-4 text-amber-500" />}
-              />
+              </div>
+              <div className="grid border-t sm:grid-cols-2 xl:grid-cols-4">
+                <Stat label="Progress" value={`${Math.round(stats.progress * 100)}%`} sub={`${stats.done} of ${stats.total} tasks done`}>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all" style={{ width: `${stats.progress * 100}%` }} />
+                  </div>
+                </Stat>
+                <Stat label="Waiting on client" value={String(stats.awaitingClient)} sub="In review or client-owned" icon={<Hourglass className="size-4 text-sky-500" />} />
+                <Stat
+                  label="Overdue"
+                  value={String(stats.overdue)}
+                  sub={stats.overdue ? "Needs attention" : "All on schedule"}
+                  icon={<AlertTriangle className={cn("size-4", stats.overdue ? "text-red-500" : "text-muted-foreground")} />}
+                  tone={stats.overdue ? "danger" : undefined}
+                />
+                <Stat
+                  label="Deadline"
+                  value={stats.daysLeft === undefined ? "–" : stats.daysLeft >= 0 ? `${stats.daysLeft} days` : `${-stats.daysLeft}d late`}
+                  sub={project.dueDate ? formatDay(project.dueDate, { day: "numeric", month: "long" }) : "No deadline set"}
+                  icon={<CalendarClock className="size-4 text-blue-500" />}
+                />
+              </div>
             </section>
 
             <section className="flex flex-wrap items-center gap-2">
               <div className="relative w-full sm:w-64 lg:hidden">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input className="pl-9" placeholder="Search tasks…" value={filter.query} onChange={(e) => setFilter({ ...filter, query: e.target.value })} />
+                <Input className="bg-card pl-9" placeholder="Search tasks" value={filter.query} onChange={(e) => setFilter({ ...filter, query: e.target.value })} />
+              </div>
+              <div className="flex rounded-lg border bg-card p-0.5" role="group" aria-label="Filter by owner">
+                {(["all", "studio", "client"] as const).map((o) => (
+                  <button
+                    key={o}
+                    type="button"
+                    aria-pressed={filter.owner === o}
+                    onClick={() => setFilter({ ...filter, owner: o })}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition",
+                      filter.owner === o && "bg-foreground text-background"
+                    )}
+                  >
+                    {o === "all" ? "Everyone" : o === "studio" ? "Our team" : "Client"}
+                  </button>
+                ))}
               </div>
               <Select value={filter.priority} onValueChange={(v) => setFilter({ ...filter, priority: v as TaskFilter["priority"] })}>
-                <SelectTrigger className="w-40" aria-label="Filter by priority"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-40 bg-card" aria-label="Filter by priority"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All priorities</SelectItem>
                   <SelectItem value="high">High</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filter.owner} onValueChange={(v) => setFilter({ ...filter, owner: v as TaskFilter["owner"] })}>
-                <SelectTrigger className="w-44" aria-label="Filter by owner"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Everyone</SelectItem>
-                  <SelectItem value="studio">Waiting on studio</SelectItem>
-                  <SelectItem value="client">Waiting on client</SelectItem>
                 </SelectContent>
               </Select>
               {filtered && (
@@ -293,9 +337,13 @@ function Workspace() {
             />
           </main>
         ) : (
-          <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-            <h1 className="text-xl font-semibold">No projects yet</h1>
-            <Button onClick={() => setProjectDialog({ open: true, edit: false })}><FolderPlus /> Create your first project</Button>
+          <main className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-sky-500 text-white shadow-lg shadow-blue-600/25">
+              <FolderPlus className="size-6" />
+            </div>
+            <h1 className="mt-5 text-2xl font-bold tracking-tight">Start your first client project</h1>
+            <p className="mt-2 max-w-sm text-muted-foreground">Add the client, a deadline and a few tasks. Then share a live status link so they always know where things stand.</p>
+            <Button className="mt-6" onClick={() => setProjectDialog({ open: true, edit: false })}><FolderPlus /> New client project</Button>
           </main>
         )}
       </div>
@@ -320,15 +368,15 @@ function Workspace() {
   );
 }
 
-function StatCard({ label, value, sub, icon, children }: { label: string; value: string; sub: string; icon?: React.ReactNode; children?: React.ReactNode }) {
+function Stat({ label, value, sub, icon, tone, children }: { label: string; value: string; sub: string; icon?: React.ReactNode; tone?: "danger"; children?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+    <div className="border-b p-5 last:border-b-0 sm:[&:nth-child(odd)]:border-r xl:border-b-0 xl:border-r xl:last:border-r-0">
+      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
         {icon}
       </div>
-      <p className="mt-1 text-2xl font-bold tabular-nums">{value}</p>
-      <p className="text-xs text-muted-foreground">{sub}</p>
+      <p className={cn("mt-2 text-3xl font-extrabold tabular-nums tracking-tight", tone === "danger" && "text-red-600 dark:text-red-400")}>{value}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>
       {children}
     </div>
   );
