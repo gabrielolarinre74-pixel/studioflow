@@ -4,7 +4,7 @@
 
 Client work usually stalls in the same place: the studio is waiting on content or approvals, the client doesn't know what is expected of them, and status updates turn into long email threads. StudioFlow keeps every client project on a drag-and-drop board, makes it obvious who each task is waiting on, and lets you send the client a **read-only status page as a single link**. The client doesn't need an account, and there is no server to run.
 
-**Live demo:** https://gabrielolarinre74-pixel.github.io/studioflow/
+**Live demo:** [Open in StackBlitz](https://stackblitz.com/github/gabrielolarinre74-pixel/studioflow) (runs in your browser with sample data, no sign-up)
 
 ![StudioFlow board](docs/screenshots/board.png)
 
