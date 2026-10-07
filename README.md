@@ -1,77 +1,95 @@
+<div align="center">
+
 # StudioFlow
 
-**Client project tracker and status portal for agencies, studios and freelancers.**
+**Client projects without the status-update emails.**
 
-Client work usually stalls in the same place: the studio is waiting on content or approvals, the client doesn't know what is expected of them, and status updates turn into long email threads. StudioFlow keeps every client project on a drag-and-drop board, makes it obvious who each task is waiting on, and lets you send the client a **read-only status page as a single link**. The client doesn't need an account, and there is no server to run.
-
-**Try it:** clone the repo and run it locally in a couple of minutes (see [Run locally](#run-locally)). It opens in demo mode with fictional sample data, so there is nothing to sign up for and no backend to configure.
+A project board and client portal for agencies, studios and freelancers. Run every client job on one board, see at a glance who's holding things up, and send clients a live status page as a single link.
 
 ![StudioFlow board](docs/screenshots/board.png)
 
+</div>
+
+## The problem it solves
+
+Client work rarely stalls because of the work itself. It stalls while you wait on copy, logos or approvals, and the client often doesn't know they're the blocker. Then "where are we at?" turns into a long email thread.
+
+StudioFlow makes ownership visible. Every task is marked as **Team** (you're on it) or **Client** (waiting on them), and one click turns the project into a clean, read-only status page the client can open without an account.
+
 ## Features
 
-### Project board
-- Multiple client projects, each with its own board (To do → In progress → Client review → Done)
-- Drag and drop tasks between columns and reorder columns, with **mouse, touch and keyboard** support (Space to pick up, arrows to move) and screen-reader announcements
-- Task cards show the type (Design, Development, Content, SEO, Launch, Automation), priority, due date and an owner badge: **ST** when the studio is on it, **CL** when it is waiting on the client
-- Overdue tasks are highlighted in red
-- Search, plus priority and owner filters ("show me everything waiting on the client")
+**Board**
+- One board per client project: To do, In progress, Client review, Done
+- Drag and drop with mouse, touch or keyboard (Space to pick up, arrows to move), with screen-reader announcements
+- Cards show type, priority flag, due date and a Team/Client owner badge. Overdue dates turn red.
+- Search, a Team/Client segmented filter and a priority filter
+- Empty lanes explain what to do next
 
-### Project health at a glance
-- Progress ring for every project in the sidebar, plus an overdue counter
-- Stat cards for progress, tasks waiting on the client, overdue tasks and days left until the deadline
+**Project overview**
+- Project hero with the client, scope and a stat strip: progress, waiting on client, overdue and days to deadline
+- Sidebar with a progress ring and overdue counter for every project
 
-### Client status page (share link)
-- **Share with client** copies a link that opens a clean, read-only status page with progress, deadline, **"Waiting on you"**, in-progress and completed work
-- The project snapshot is compressed into the link itself (`lz-string`), so it works on static hosting with no database and no login
-- Links are validated with a strict schema when opened. Tampered or truncated links show a friendly error instead of breaking the page.
+**Client status page**
+- **Share with client** copies a link to a branded, read-only page: overall progress, deadline, "Waiting on you", in progress and completed
+- The snapshot is compressed into the link itself, so it works on static hosting with no database or login
+- Links are schema-checked when opened, so a truncated or edited link shows a friendly message instead of a broken page
 
-### Data you own
-- Everything is saved in the browser (`localStorage`) and restored on reload
-- **Export and import JSON backups**. Imports are schema-validated, size-limited and never overwrite existing projects.
-- Create, edit and delete projects (name, client, scope, deadline, colour) and tasks (title, details, status, owner, priority, type, due date) with inline validation
+**Keyboard first**
+- `N` new task, `/` search, `S` copy the client link, `?` shortcut list
+- Shortcuts are ignored while you type and never override browser shortcuts
 
-### Polish
-- Light and dark themes, responsive layout with a project switcher on mobile
-- Due dates are handled as local calendar days, so "Oct 23" is the same day in every time zone
+**Your data**
+- Saved in the browser and restored on reload
+- JSON export and import. Imports are validated, size-limited and never overwrite existing projects.
+- Create, edit and delete projects (client, scope, deadline, colour) and tasks (details, status, owner, priority, type, due date), with inline validation
+- Due dates are stored as calendar days, so a deadline is the same day in every time zone
 
-| Client status page | Task editor |
+## Screenshots
+
+| Client status page | Keyboard shortcuts |
 | --- | --- |
-| ![Client status page](docs/screenshots/client-status-page.png) | ![Task dialog](docs/screenshots/task-dialog.png) |
-| **Dark mode** | **Mobile** |
-| ![Dark mode](docs/screenshots/board-dark.png) | <img src="docs/screenshots/mobile.png" width="260" alt="Mobile" /> |
+| ![Client status page](docs/screenshots/client-status-page.png) | ![Shortcuts](docs/screenshots/shortcuts.png) |
+| **Task editor** | **Dark mode** |
+| ![Task editor](docs/screenshots/task-dialog.png) | ![Dark mode](docs/screenshots/board-dark.png) |
+
+<p align="center"><img src="docs/screenshots/mobile.png" width="300" alt="StudioFlow on a phone" /></p>
+
+The clients and projects in the demo are fictional sample data.
+
+## Design
+
+- **Palette:** blue on white with black ink, plus a deep navy dark mode
+- **Type:** Plus Jakarta Sans, self-hosted
+- **Layout:** floating sidebar, breadcrumb header, a project hero with a gradient edge and an inline stat strip, and soft lanes with lifted cards
 
 ## Tech stack
 
-- **React 19 + TypeScript 5.9**, built with **Vite 7**
-- **dnd-kit** for accessible drag and drop
-- **Tailwind CSS v4**, Radix UI primitives and shadcn/ui-style components
-- **Zustand** (persist middleware) for state
-- **Zod** for data validation (backups and share links)
-- **Vitest** + Testing Library + jsdom
-- **GitHub Actions**: lint, tests and build checks on every push
-
-## How it's built
+| Area | Tools |
+| --- | --- |
+| App | React 19, TypeScript 5.9, Vite 7 |
+| Drag and drop | dnd-kit (pointer, touch and keyboard sensors) |
+| UI | Tailwind CSS v4, Radix primitives, Lucide icons |
+| State | Zustand with versioned `localStorage` persistence |
+| Validation | Zod (backups and share links) |
+| Sharing | lz-string compressed snapshots in the URL hash |
+| Quality | Vitest, Testing Library, ESLint 9, GitHub Actions CI |
 
 ```
 src/
   lib/
-    types.ts         # zod schemas: Project, Task, Column
-    board.ts         # pure board logic: immutable moveTask, stats, filters, date helpers
-    share.ts         # encode/decode read-only snapshots for client links
-    store.ts         # persisted Zustand store (projects, tasks, import/export)
-    sample-data.ts   # fictional demo projects
-  components/
-    KanbanBoard.tsx  # dnd-kit context, sensors, a11y announcements
-    BoardColumn.tsx, TaskCard.tsx, TaskDialog.tsx, ProjectDialog.tsx
-    ShareView.tsx    # the client-facing status page
+    board.ts        # pure board logic: immutable moves, stats, filters, date helpers
+    share.ts        # snapshot encode/decode with validation
+    shortcuts.ts    # keyboard shortcut mapping
+    store.ts        # persisted store, safe JSON import
+    types.ts        # schemas for projects, tasks and columns
+  components/       # board, cards, dialogs, client status page
 ```
 
-Drag logic lives in `moveTask()`, a pure function that never mutates state and never computes a negative index when a task is dropped above the first card. Board, share-link and store behaviour is covered by unit tests, and the main flows (rendering the board, validating the task form, opening share links) are covered by component tests.
+Moving a card never mutates state and never computes a negative index when a card is dropped above the first one. Board logic, sharing, shortcuts and the store have unit tests, and the main flows have component tests.
 
 ## Run locally
 
-**Requirements:** Node.js 20 or newer (npm comes with it).
+You need Node.js 20+ (npm comes with it).
 
 ```bash
 git clone https://github.com/gabrielolarinre74-pixel/studioflow.git
@@ -80,32 +98,30 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173.
+Open http://localhost:5173.
 
-### Demo mode
+**Demo mode.** Three sample client projects load on first visit, so the board, stats and client page all have something to show. Changes stay in your browser. **⋯ → Reset demo data** starts over.
 
-The app starts with fictional sample data so every screen (the project boards and the client status page) has something to show. Everything you add or change is saved in your browser's `localStorage`. Nothing is sent to a server. To start over, use **Reset** in the sidebar.
-
-### Other commands
+Other commands:
 
 ```bash
-npm test
+npm test          # unit and component tests
 npm run lint
-npm run build
-npm run preview
+npm run build     # static site in dist/
+npm run preview   # serve the build
 ```
 
-`npm run build` writes a static site to `dist/`, and `npm run preview` serves it. No environment variables or API keys are needed (see `.env.example`).
+No environment variables or API keys are needed (see `.env.example`).
 
-## Deployment
+## Hosting
 
-The production build is a static site, so `dist/` can be hosted on Vercel, Netlify, Cloudflare Pages, S3 or any static host. GitHub Actions (`.github/workflows/ci.yml`) runs lint, tests and the build on every push and pull request. A GitHub Pages workflow is included, but it is turned off and only runs if someone starts it by hand.
+The build is a static site that runs on Vercel, Netlify, Cloudflare Pages, S3 or any static host, with no rewrites needed. CI (`.github/workflows/ci.yml`) lints, tests and builds every push. A GitHub Pages workflow is included but turned off, and only runs if started by hand.
 
 ## Roadmap
 
-- Optional Supabase backend for live, always-up-to-date client links and team accounts
+- Optional Supabase backend for always-current client links and team accounts
 - Client approvals straight from the status page
-- Email digests of overdue and waiting-on-client tasks
+- Weekly email digest of overdue and waiting-on-client tasks
 
 ## License
 
@@ -114,5 +130,3 @@ MIT. See [LICENSE](LICENSE).
 ---
 
 Designed and developed by **Gabriel Zion** · [Gabriel.ATH](https://gabrielzion-portfolio.vercel.app). Websites, apps, automation and UI/UX for growing businesses.
-
-The demo projects and client names are fictional sample data.
